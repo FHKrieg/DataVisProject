@@ -87,6 +87,10 @@ colnames(totalData)[6] <- "HydroElectric"
 colnames(totalData)[10] <- "wood"
 colnames(totalData)[12] <- "biomass"
 colnames(totalData)[17] <- "Solar"
+colnames(totalData)[21] <- "SunHours"
+colnames(totalData)[22] <- "AvgWindSpeed"
+totalData <- totalData %>% separate(col = 'SunHours',into = c('SunHours','sunUnit'),sep = " ")
+#split hours and double
 ```
 # Export the data into a CSV
 
