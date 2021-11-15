@@ -1,0 +1,110 @@
+---
+title: "DataPrep"
+author: "Vincent Krieg"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(readxl)
+library(readr)
+library(tidyverse)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r}
+#https://www.eia.gov/electricity/data/state/ accessed 08.11.2021
+annual_generation_state <- read_excel("annual_generation_state.xls", 
+    sheet = "Net_Generation_1990-2020 Final", 
+    col_names = FALSE)
+annual_generation_state <- annual_generation_state[-c(1),]
+names(annual_generation_state) <- as.matrix(annual_generation_state[1, ])
+annual_generation_state <- annual_generation_state[-1, ]
+annual_generation_state[] <- lapply(annual_generation_state, function(x) type.convert(as.character(x)))
+annual_generation_state <- annual_generation_state %>% pivot_wider(names_from = `ENERGY SOURCE`, values_from = `GENERATION (Megawatthours)`)
+
+
+```
+
+```{r}
+#http://www.usa.com/rank/us--average-wind-speed--state-rank.htm?yr=9000&dis=50&wist=&plow=&phigh= accessed 08.11.2021
+averageWind <- read_delim("averageWind.csv", 
+    delim = ";", escape_double = FALSE, locale = locale(), 
+    trim_ws = TRUE) %>% separate(col = 'State / Population',into = c('State','Population'),sep = "/") %>% separate(col = 'Average Wind Speed ▼',into = c('Average Wind Speed','UnitWind'),sep = " ") 
+averageWindstr <- str_trim(averageWind$State,side = c("right"))
+averageWind[,4] <- averageWindstr
+averageWind <- averageWind[,-1]
+
+```
+```{r}
+#http://www.usa.com/rank/us--average-education-index--state-rank.htm?yr=9000&dis=50&wist=&plow=&phigh=
+AverageEducationIndexbyState <- read_excel("AverageEducationIndexbyState copy.xlsx")
+AverageEducationIndexbyState <- AverageEducationIndexbyState[,-1]
+colnames(AverageEducationIndexbyState)[1] <- "EducationIndex"
+
+#https://www.turbinegenerator.org/sunlight-hours-rank/
+Average_Peak_Sun_hours_by_state <- read_excel("Average Peak Sun hours by state copy.xlsx")
+Average_Peak_Sun_hours_by_state <- Average_Peak_Sun_hours_by_state[,-1]
+
+
+#https://about.usps.com/who-we-are/postal-history/state-abbreviations.htm
+USStatesRename <- read_excel("USStatesRename copy.xlsx")
+
+
+#https://apps.bea.gov/itable/iTable.cfm?ReqID=70&step=1#reqid=70&step=1&isuri=1
+GDPUS2020MioUSD <- read_csv("GDPUS2020MioUSD.csv", 
+    skip = 4)
+
+#https://cookpolitical.com/2020-national-popular-vote-tracker
+percentagesUSElection <- read_csv("Popular vote backend - Sheet1.csv")
+percentagesUSElectionFiltered <- percentagesUSElection %>% select(dem_percent,rep_percent,state) %>% mutate(dem_percent = as.double(str_remove(dem_percent,"%"))) %>% mutate(rep_percent = as.double(str_remove(rep_percent,"%")))
+
+```
+```{r}
+#merge it all
+j1 <- left_join(GDPUS2020MioUSD, Average_Peak_Sun_hours_by_state, by = c("GeoName"="State"))
+j2 <- left_join(j1,averageWind,by = c("GeoName"="State"))
+j3 <- left_join(j2,AverageEducationIndexbyState,by = c("GeoName"="...3"))
+j5 <- left_join(j3,percentagesUSElectionFiltered,by =c("GeoName"="state"))
+j4 <- left_join(j5,USStatesRename,by = c("GeoName"="Name"))
+j4 <- j4 %>% drop_na(Postal)
+totalData <- left_join(annual_generation_state,j4,by=c("STATE"="Postal"))
+colnames(totalData)[2] <- "state"
+colnames(totalData)[3] <- "Type_of_Producer"
+colnames(totalData)[6] <- "HydroElectric"
+colnames(totalData)[10] <- "wood"
+colnames(totalData)[12] <- "biomass"
+colnames(totalData)[17] <- "Solar"
+```
+# Export the data into a CSV
+
+```{r}
+write.csv(totalData,"totalData.csv", row.names = FALSE, na="0")
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

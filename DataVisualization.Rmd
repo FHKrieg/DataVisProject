@@ -1,0 +1,90 @@
+---
+title: "Data Visualistation Story Telling"
+author: "Vincent Krieg"
+date: "11/14/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Republicans don't believe in climate change so those states will use less renewable Energies
+
+
+```{r}
+library(readr)
+library(tidyverse)
+library(usmap)
+library(ggplot2)
+```
+
+### Import of the Data ###
+
+```{r}
+totalData <- read_csv("totalData.csv")
+```
+```{r}
+# Download data and store in project directory
+mapDemRep <- totalData %>% filter(YEAR=="2020") %>% filter(Type_of_Producer=='Total Electric Power Industry') %>% mutate(dem_rep=if_else(dem_percent>rep_percent,"Democratic","Republican"))
+cols <- c("Republican" = "red", "Democratic" = "blue")
+USplot <-  plot_usmap(data = mapDemRep, values="dem_rep",regions = "states",labels = TRUE) + 
+ scale_fill_manual(values = cols, name = "Political Party", 
+                  guide = guide_legend(reverse = TRUE))+
+    labs(title = "U.S. States",
+       subtitle = "This map shows which political party won which state in the 2020 U.S. presidential elections") +
+  theme(legend.position = "bottom")
+  
+USplot$layers[[2]]$aes_params$size <- 2
+print(USplot)
+
+
+```
+```{r}
+greenCard <- totalData %>% filter(YEAR=="2020") %>% filter(Type_of_Producer=='Total Electric Power Industry')  %>% mutate(renewableTotal=HydroElectric+Wind+wood+biomass+Geothermal+Solar)
+
+
+
+
+
+
+
+```
+```{r}
+
+
+```
+```{r}
+
+
+```
+```{r}
+
+
+```
+```{r}
+
+
+```
+```{r}
+
+
+```
+```{r}
+
+
+```
+```{r}
+
+
+```
+
+
+
+
+
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
