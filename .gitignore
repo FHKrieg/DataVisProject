@@ -12,11 +12,11 @@
 *-Ex.R
 
 # Ignore Datafiles
-.csv
-.osm
-.xls
-.xlsx
-.dta copy
+/*.csv
+/*.osm
+/*.xls
+/*.xlsx
+/*.dta copy
 
 
 # Output files from R CMD build
