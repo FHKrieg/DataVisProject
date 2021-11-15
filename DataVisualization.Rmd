@@ -57,7 +57,24 @@ print(USplot)
 
 ```
 ```{r}
+greenCard <- greenCard[!(greenCard$state == "US-Total"),]
+greenCard <- greenCard[!(greenCard$state == "DC"),]
+CorrelationPlots <- pivot_longer(greenCard,cols = c("SunHours", "AvgWindSpeed", "Population", "EducationIndex", "rep_percent"), names_to = "VarName", values_to = "VarValues")
 
+p <- ggplot(CorrelationPlots, mapping = aes(VarValues, renewablePercent)) + 
+  geom_point()+
+  geom_smooth(method='lm')
+p + facet_wrap(~VarName, scales = "free_x", ncol = 3, labeller = labeller(VarName =
+                                                                            c("SunHours" = "Average sunshine hours per day", 
+                                                                              "AvgWindSpeed" = "Average Wind Speed", 
+                                                                              "Population"= "Population", 
+                                                                              "EducationIndex"="Education index", 
+                                                                              "rep_percent" = "Percentage votes Republicans 2020 ")
+                                                                          ))+
+  ylab("Percentage of renewable energy")+
+  xlab("Individual units")+
+  labs(title = "Correlation of individual factors on the percentage of renewable energy used" )+
+  theme(panel.spacing = unit(2, "lines"))
 
 ```
 ```{r}
