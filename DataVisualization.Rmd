@@ -41,10 +41,16 @@ print(USplot)
 
 ```
 ```{r}
-greenCard <- totalData %>% filter(YEAR=="2020") %>% filter(Type_of_Producer=='Total Electric Power Industry')  %>% mutate(renewableTotal=HydroElectric+Wind+wood+biomass+Geothermal+Solar)
+greenCard <- totalData %>% filter(YEAR=="2020") %>% filter(Type_of_Producer=='Total Electric Power Industry')  %>% mutate(renewableTotal=HydroElectric+Wind+wood+biomass+Geothermal+Solar) %>% mutate(renewablePercent= (renewableTotal/Total)*100)
 
-
-
+USplot <-  plot_usmap(data =greenCard, values="renewablePercent",regions = "states",labels = TRUE) + 
+    scale_fill_continuous(low = "white", high = "green", name = "Renewable Energy in %", label = scales::comma)+
+    labs(title = "U.S. States",
+       subtitle = "This map shows the percentage of renewable energy used by state (2020)") +
+  theme(legend.position = "bottom")
+  
+USplot$layers[[2]]$aes_params$size <- 2
+print(USplot)
 
 
 
