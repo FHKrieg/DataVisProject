@@ -17,6 +17,8 @@
 /*.xls
 /*.xlsx
 /*.dta copy
+/*.tsv
+/*.DS_Store
 
 
 # Output files from R CMD build
