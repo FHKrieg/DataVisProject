@@ -17,6 +17,8 @@ library(readr)
 library(tidyverse)
 library(usmap)
 library(ggplot2)
+library(yhat)
+library(gridExtra)
 ```
 
 ### Import of the Data ###
@@ -31,37 +33,94 @@ cols <- c("Republican" = "red", "Democratic" = "blue")
 USplot <-  plot_usmap(data = mapDemRep, values="dem_rep",regions = "states",labels = TRUE) + 
  scale_fill_manual(values = cols, name = "Political Party", 
                   guide = guide_legend(reverse = TRUE))+
-    labs(title = "U.S. States",
-       subtitle = "This map shows which political party won which state in the 2020 U.S. presidential elections") +
+    labs(title = "Pesidential elections in the US 2020") +
   theme(legend.position = "bottom")
   
 USplot$layers[[2]]$aes_params$size <- 2
-print(USplot)
+
 
 
 ```
 ```{r}
 greenCard <- totalData %>% filter(YEAR=="2020") %>% filter(Type_of_Producer=='Total Electric Power Industry')  %>% mutate(renewableTotal=HydroElectric+Wind+wood+biomass+Geothermal+Solar) %>% mutate(renewablePercent= (renewableTotal/Total)*100)
 
-USplot <-  plot_usmap(data =greenCard, values="renewablePercent",regions = "states",labels = TRUE) + 
+USplot1 <-  plot_usmap(data =greenCard, values="renewablePercent",regions = "states",labels = TRUE) + 
     scale_fill_continuous(low = "white", high = "green", name = "Renewable Energy in %", label = scales::comma)+
-    labs(title = "U.S. States",
-       subtitle = "This map shows the percentage of renewable energy used by state (2020)") +
+    labs(
+       title = "Percentage of renewable energy used by state 2020") +
   theme(legend.position = "bottom")
   
-USplot$layers[[2]]$aes_params$size <- 2
-print(USplot)
+USplot1$layers[[2]]$aes_params$size <- 2
 
 
+grid.arrange(USplot,USplot1, ncol=2, top=textGrob("Politics and renewable energies in the United States",gp=gpar(fontsize=20,font=3)))
 
 
 ```
 ```{r}
+greenCard <- greenCard %>% 
+  mutate(coalPercent= (Coal/Total)*100) %>%
+  mutate(HydroElectricPercent= (HydroElectric/Total)*100) %>%
+  mutate(gasPercent= (Gas/Total)*100) %>%
+  mutate(petroleumPercent= (Petroleum/Total)*100) %>%
+  mutate(windPercent= (Wind/Total)*100) %>%
+  mutate(woodPercent= (wood/Total)*100) %>%
+  mutate(nuclearPercent= (Nuclear/Total)*100) %>%
+  mutate(biomassPercent= (biomass/Total)*100) %>%
+  mutate(geothermalPercent= (Geothermal/Total)*100) %>%
+  mutate(solarPercent= (Solar/Total)*100)
+
+
+```
+
+```{r}
+
+createUSmap <- function(colName,colorPlot, nameScale, titlePlot){
+  returnPlot <-  plot_usmap(data =greenCard, values=colName,regions = "states",labels = TRUE) + 
+    scale_fill_continuous(low = "white", high = colorPlot, 
+                          name = nameScale, label = scales::comma)+
+    labs(title = titlePlot) +
+  theme(legend.position = "bottom")
+  returnPlot$layers[[2]]$aes_params$size <- 2
+  return(returnPlot)
+}
+
+  
+
+coal <- createUSmap("coalPercent","black","Percentage coal in energymix", "Coal")
+hydro <- createUSmap("HydroElectricPercent","darkblue","Percentage hydro electric in energymix", "Hydro Electic")
+gas <- createUSmap("gasPercent","brown","Percentage natural gas in energymix", "Natural Gas")
+petr <- createUSmap("petroleumPercent","darkgrey","Percentage petroleum in energymix", "Petroleum")
+wind <- createUSmap("windPercent","lightblue","Percentage wind in energymix", "Wind")
+nuc <- createUSmap("nuclearPercent","green","Percentage nuclear in energymix", "Nuclear")
+bio <- createUSmap("biomassPercent","brown","Percentage biomass in energymix", "Biomass")
+geo <- createUSmap("geothermalPercent","darkred","Percentage geothermal in energymix", "Geothermal")
+solar <- createUSmap("solarPercent","yellow","Percentage solar in energymix", "Solar")
+wood <- createUSmap("woodPercent","darkgreen","Percentage wood in energymix", "Wood")
+
+#grid.arrange(coal,USplot1,hydro,gas,petr,wind,nuc,bio,geo,solar,wood, ncol=2,nrow=6, top=textGrob("Politics and renewable energies in the United States",gp=gpar(fontsize=20,font=3)))
+grid.arrange(coal,hydro,gas,wind, ncol=2,nrow=2, top=textGrob("Politics and renewable energies in the United States",gp=gpar(fontsize=20,font=3)))
+
+```
+
+```{r}
+
+
+
+```
+
+
+
+```{r}
+
 
 #Check for the logarithmic functions used in the Regression
 greenCard <- greenCard[!(greenCard$state == "US-Total"),]
 greenCard <- greenCard[!(greenCard$state == "DC"),]
-CorrelationPlots <- pivot_longer(greenCard,cols = c("SunHours", "AvgWindSpeed", "Population", "EducationIndex", "rep_percent"), names_to = "VarName", values_to = "VarValues")
+
+greenCard <- greenCard %>% mutate(renewablePercent = log(renewablePercent)) 
+
+CorrelationPlots <- pivot_longer(greenCard,cols = c("SunHours", "AvgWindSpeed", "Population", "EducationIndex", "rep_percent", "GdpinMioUSD"), names_to = "VarName", values_to = "VarValues")
 
 p <- ggplot(CorrelationPlots, mapping = aes(VarValues, renewablePercent)) + 
   geom_point()+
@@ -71,9 +130,10 @@ p + facet_wrap(~VarName, scales = "free_x", ncol = 3, labeller = labeller(VarNam
                                                                               "AvgWindSpeed" = "Average Wind Speed", 
                                                                               "Population"= "Population", 
                                                                               "EducationIndex"="Education index", 
-                                                                              "rep_percent" = "Percentage votes Republicans 2020 ")
+                                                                              "rep_percent" = "Percentage votes Republicans 2020 ",
+                                                                              "GdpinMioUSD" = "Gdp in Mio USD in 2020")
                                                                           ))+
-  ylab("Percentage of renewable energy")+
+  ylab("Log percentage of renewable energy")+
   xlab("Individual units")+
   labs(title = "Correlation of individual factors on the percentage of renewable energy used" )+
   theme(panel.spacing = unit(2, "lines"))
@@ -81,14 +141,21 @@ p + facet_wrap(~VarName, scales = "free_x", ncol = 3, labeller = labeller(VarNam
 ```
 ```{r}
 
+lmodel <- lm(renewablePercent ~ SunHours + AvgWindSpeed + Population + EducationIndex + GdpinMioUSD + rep_percent, data = greenCard)
+summary(lmodel)
 
 ```
 ```{r}
-
-
+greenCard <- data.frame(greenCard, y_hat = fitted(lmodel), e = residuals(lmodel))
+print(greenCard)
 ```
 ```{r}
-
+greenCard %>% ggplot(mapping = aes(renewablePercent, y_hat))+
+  geom_point(color = "steelblue")+
+  geom_line(data = greenCard,mapping= aes(renewablePercent, renewablePercent), color = "darkred")+
+  ylab("predicted log renewable energy percent")+
+  xlab("actual log renewable energy percent")+
+  theme_bw()
 
 ```
 ```{r}
