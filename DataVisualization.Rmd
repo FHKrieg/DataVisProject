@@ -19,6 +19,7 @@ library(usmap)
 library(ggplot2)
 library(yhat)
 library(gridExtra)
+library(grid)
 ```
 
 ### Import of the Data ###
@@ -98,8 +99,14 @@ geo <- createUSmap("geothermalPercent","darkred","Percentage geothermal in energ
 solar <- createUSmap("solarPercent","yellow","Percentage solar in energymix", "Solar")
 wood <- createUSmap("woodPercent","darkgreen","Percentage wood in energymix", "Wood")
 
+```
+
+
+```{r}
+
+
 #grid.arrange(coal,USplot1,hydro,gas,petr,wind,nuc,bio,geo,solar,wood, ncol=2,nrow=6, top=textGrob("Politics and renewable energies in the United States",gp=gpar(fontsize=20,font=3)))
-grid.arrange(coal,hydro,gas,wind, ncol=2,nrow=2, top=textGrob("Politics and renewable energies in the United States",gp=gpar(fontsize=20,font=3)))
+grid.arrange(bio,wood,geo,nuc, ncol=2,nrow=2, top=textGrob("Politics and renewable energies in the United States",gp=gpar(fontsize=20,font=3)))
 
 ```
 
@@ -158,12 +165,33 @@ greenCard %>% ggplot(mapping = aes(renewablePercent, y_hat))+
   theme_bw()
 
 ```
-```{r}
 
+```{r}
+barPlotData <- totalData %>% 
+  mutate(coalPercent= (Coal/Total)*100) %>%
+  mutate(HydroElectricPercent= (HydroElectric/Total)*100) %>%
+  mutate(gasPercent= (Gas/Total)*100) %>%
+  mutate(petroleumPercent= (Petroleum/Total)*100) %>%
+  mutate(windPercent= (Wind/Total)*100) %>%
+  mutate(woodPercent= (wood/Total)*100) %>%
+  mutate(nuclearPercent= (Nuclear/Total)*100) %>%
+  mutate(biomassPercent= (biomass/Total)*100) %>%
+  mutate(geothermalPercent= (Geothermal/Total)*100) %>%
+  mutate(solarPercent= (Solar/Total)*100) %>% filter(YEAR == 2020) %>% filter(state == "US-Total") %>% filter(Type_of_Producer =="Total Electric Power Industry")
+barPlotData <- pivot_longer(barPlotData,cols = c("coalPercent", "HydroElectricPercent", "gasPercent", "petroleumPercent", "windPercent", "nuclearPercent","biomassPercent","geothermalPercent","solarPercent"), names_to = "VarName", values_to = "VarValues")
+barPlotData <- barPlotData[order(-barPlotData$VarValues),]
 
 ```
 ```{r}
-
+barPlotData %>% ggplot(mapping = aes(fct_reorder(VarName,
+                         VarValues, .desc = TRUE), 
+             VarValues)) +
+  geom_col(color = VarName)+
+  ylab("Percentage in the US energymix")#+
+  #scale_fill_manual(values = c(rep(c("gray45", "gray75"))))
+  #theme(axis.title.x=element_blank(),
+    #    axis.text.x=element_blank(),
+     #   axis.ticks.x=element_blank())
 
 ```
 ```{r}
