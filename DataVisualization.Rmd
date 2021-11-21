@@ -11,6 +11,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Republicans don't believe in climate change so those states will use less renewable Energies
 
+It is common knowledge that part of the Republican Party in the United States denies the existence
+of man made climate change. Since they do not believe in man made climat change, one could expect 
+that the amount of renewable energies in those states that have voted for the Republicans in the 2020
+Presidential Election, the percentage of renewable energies in the energy mix is rather low. In contrast
+if the percentage of votes for the Republican Party in 2020 has no effect what factors play a more 
+important role for the percentage of renewable energy in a states energy mix?
 
 ```{r}
 library(readr)
@@ -27,8 +33,12 @@ library(grid)
 ```{r}
 totalData <- read_csv("totalData.csv")
 ```
+The first plot is supposed to give an overview over the political outcome and the energy mix of a state side by side.
+In order to achiev this the political results are used to display who of the two parties has gained more votes in a state
+and the state will then be marked according to the winning political parties color. in the graph on the right the percentage
+of renewable energy in the energy mix of a state will be represented. In order to achieve this the data on the was filtered
+for the year 2020 and to only show the total amount of electricity used in a state cummulated over all segments. After this the cummulated sum over the renewable energies was build and divided by the total amount of energy consumed in a state.
 ```{r}
-# Download data and store in project directory
 mapDemRep <- totalData %>% filter(YEAR=="2020") %>% filter(Type_of_Producer=='Total Electric Power Industry') %>% mutate(dem_rep=if_else(dem_percent>rep_percent,"Democratic","Republican"))
 cols <- c("Republican" = "red", "Democratic" = "blue")
 USplot <-  plot_usmap(data = mapDemRep, values="dem_rep",regions = "states",labels = TRUE) + 
@@ -46,7 +56,7 @@ USplot$layers[[2]]$aes_params$size <- 2
 greenCard <- totalData %>% filter(YEAR=="2020") %>% filter(Type_of_Producer=='Total Electric Power Industry')  %>% mutate(renewableTotal=HydroElectric+Wind+wood+biomass+Geothermal+Solar) %>% mutate(renewablePercent= (renewableTotal/Total)*100)
 
 USplot1 <-  plot_usmap(data =greenCard, values="renewablePercent",regions = "states",labels = TRUE) + 
-    scale_fill_continuous(low = "white", high = "green", name = "Renewable Energy in %", label = scales::comma)+
+    scale_fill_continuous(low = "white", high = "darkgreen", name = "Renewable Energy in %", label = scales::comma)+
     labs(
        title = "Percentage of renewable energy used by state 2020") +
   theme(legend.position = "bottom")
@@ -58,6 +68,13 @@ grid.arrange(USplot,USplot1, ncol=2, top=textGrob("Politics and renewable energi
 
 
 ```
+When looking at the first graph and with the questions from the begining there are some interesting observations can be made.
+  1. The States with the highest amount of renewables are in the northern part of the united states
+  2. Idaho and South Dakota were won by the republicans but have a high percentage of renewables 
+  3. There is a large range of percentages of renewables between the individual states
+  4. There is no obvious correlation between the percentage of renewables and the party that won a state
+  
+
 ```{r}
 greenCard <- greenCard %>% 
   mutate(coalPercent= (Coal/Total)*100) %>%
@@ -74,48 +91,76 @@ greenCard <- greenCard %>%
 
 ```
 
+On the basis of the first plot it would be interesting to see which renewable energy production type is used by which state.
+In order to get this inforamtion the processed data from part one is used and for each state the percentage of all the different power sources is calculated. Additionally a function is used to make the construction of the repeating graphs 
+easier.
+All plots are generated so that with adjusting the code a little bit all the other energy sources could be easily displayed.
+
+
+
 ```{r}
 
 createUSmap <- function(colName,colorPlot, nameScale, titlePlot){
-  returnPlot <-  plot_usmap(data =greenCard, values=colName,regions = "states",labels = TRUE) + 
+  returnPlot <-  plot_usmap(data =greenCard, values=colName,regions = "states") + 
     scale_fill_continuous(low = "white", high = colorPlot, 
                           name = nameScale, label = scales::comma)+
-    labs(title = titlePlot) +
-  theme(legend.position = "bottom")
+    labs(title = titlePlot)+
+  theme(legend.position = "right",
+        legend.key.height = unit(3, 'mm'), 
+        legend.key.width = unit(1, 'mm'),
+        legend.title =element_text(size=8))
   returnPlot$layers[[2]]$aes_params$size <- 2
   return(returnPlot)
 }
 
   
 
-coal <- createUSmap("coalPercent","black","Percentage coal in energymix", "Coal")
-hydro <- createUSmap("HydroElectricPercent","darkblue","Percentage hydro electric in energymix", "Hydro Electic")
-gas <- createUSmap("gasPercent","brown","Percentage natural gas in energymix", "Natural Gas")
-petr <- createUSmap("petroleumPercent","darkgrey","Percentage petroleum in energymix", "Petroleum")
-wind <- createUSmap("windPercent","lightblue","Percentage wind in energymix", "Wind")
-nuc <- createUSmap("nuclearPercent","green","Percentage nuclear in energymix", "Nuclear")
-bio <- createUSmap("biomassPercent","brown","Percentage biomass in energymix", "Biomass")
-geo <- createUSmap("geothermalPercent","darkred","Percentage geothermal in energymix", "Geothermal")
-solar <- createUSmap("solarPercent","yellow","Percentage solar in energymix", "Solar")
-wood <- createUSmap("woodPercent","darkgreen","Percentage wood in energymix", "Wood")
+coal <- createUSmap("coalPercent","black","% energymix", "Coal")
+hydro <- createUSmap("HydroElectricPercent","darkblue","% energymix", "Hydro Electic")
+gas <- createUSmap("gasPercent","brown","% energymix", "Natural Gas")
+petr <- createUSmap("petroleumPercent","wheat4","% energymix", "Petroleum")
+wind <- createUSmap("windPercent","lightblue","% energymix", "Wind")
+nuc <- createUSmap("nuclearPercent","green","% energymix", "Nuclear")
+bio <- createUSmap("biomassPercent","brown","% energymix", "Biomass")
+geo <- createUSmap("geothermalPercent","darkred","% energymix", "Geothermal")
+solar <- createUSmap("solarPercent","yellow","% energymix", "Solar")
+wood <- createUSmap("woodPercent","darkgreen","% energymix", "Wood")
 
 ```
 
+After looking through all different sources the 4, in my opinion, most interesting ones were picked and displayed below.
+By combining those 4 into one grafic.
 
 ```{r}
-
-
-#grid.arrange(coal,USplot1,hydro,gas,petr,wind,nuc,bio,geo,solar,wood, ncol=2,nrow=6, top=textGrob("Politics and renewable energies in the United States",gp=gpar(fontsize=20,font=3)))
-grid.arrange(bio,wood,geo,nuc, ncol=2,nrow=2, top=textGrob("Politics and renewable energies in the United States",gp=gpar(fontsize=20,font=3)))
+grid.arrange(solar,wood,geo,wind, ncol=2,nrow=2, top=textGrob("Renewable Energies",gp=gpar(fontsize=20,font=3)))
 
 ```
+## Analysis of the individual parts of the energymix in the 52 states
 
-```{r}
+The darker the color the higher the percentage of the energymix of this state.
+Be aware of the color scheme as they differ between the productiontypes. This 
+is on purpose to to better show the variety if the maximum percentage is rather low.
 
 
-
-```
-
+Interessting aspects:
+  Solar:
+    * Mainly used in california and nevada
+    * Texas is relativly low eventhough the state has favorable wetherconditions for this type of energy production
+    
+  Wood:
+    * Main and Vermont booth get more than 15 % of their energy from wood
+    * Georga and New Hemsphire get a little over 4 % of their energy supplied by wood
+    
+  Geothermal:
+    * Hardly adds to the supply of Energy throught the US 
+    * The hotspot for this technology is Nevada 
+    * Followed by California
+    
+  Wind:
+    * Relative percentage of wind as a source of power is greate in the center of the country 
+    * Wind does not account for much of the energysupply on the coast 
+    
+    
 
 
 ```{r}
@@ -130,7 +175,7 @@ greenCard <- greenCard %>% mutate(renewablePercent = log(renewablePercent))
 CorrelationPlots <- pivot_longer(greenCard,cols = c("SunHours", "AvgWindSpeed", "Population", "EducationIndex", "rep_percent", "GdpinMioUSD"), names_to = "VarName", values_to = "VarValues")
 
 p <- ggplot(CorrelationPlots, mapping = aes(VarValues, renewablePercent)) + 
-  geom_point()+
+  geom_point(size=0.75)+
   geom_smooth(method='lm')
 p + facet_wrap(~VarName, scales = "free_x", ncol = 3, labeller = labeller(VarName =
                                                                             c("SunHours" = "Average sunshine hours per day", 
@@ -156,12 +201,17 @@ summary(lmodel)
 greenCard <- data.frame(greenCard, y_hat = fitted(lmodel), e = residuals(lmodel))
 print(greenCard)
 ```
+## Fehleranalyse 
+
+
+
 ```{r}
 greenCard %>% ggplot(mapping = aes(renewablePercent, y_hat))+
   geom_point(color = "steelblue")+
   geom_line(data = greenCard,mapping= aes(renewablePercent, renewablePercent), color = "darkred")+
-  ylab("predicted log renewable energy percent")+
-  xlab("actual log renewable energy percent")+
+  ylab("Predicted log renewable energy percent")+
+  xlab("Actual log renewable energy percent")+
+  labs(title = "Error analysis")+
   theme_bw()
 
 ```
@@ -182,16 +232,20 @@ barPlotData <- pivot_longer(barPlotData,cols = c("coalPercent", "HydroElectricPe
 barPlotData <- barPlotData[order(-barPlotData$VarValues),]
 
 ```
+
+
+
 ```{r}
 barPlotData %>% ggplot(mapping = aes(fct_reorder(VarName,
                          VarValues, .desc = TRUE), 
              VarValues)) +
-  geom_col(color = VarName)+
+  geom_col(fill = "steelblue")+#color = VarName)+
+  
   ylab("Percentage in the US energymix")#+
-  #scale_fill_manual(values = c(rep(c("gray45", "gray75"))))
-  #theme(axis.title.x=element_blank(),
-    #    axis.text.x=element_blank(),
-     #   axis.ticks.x=element_blank())
+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
 
 ```
 ```{r}
@@ -202,9 +256,3 @@ barPlotData %>% ggplot(mapping = aes(fct_reorder(VarName,
 
 
 
-
-
-
-
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
