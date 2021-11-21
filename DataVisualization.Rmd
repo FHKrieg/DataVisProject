@@ -104,7 +104,7 @@ createUSmap <- function(colName,colorPlot, nameScale, titlePlot){
   returnPlot <-  plot_usmap(data =greenCard, values=colName,regions = "states") + 
     scale_fill_continuous(low = "white", high = colorPlot, 
                           name = nameScale, label = scales::comma)+
-    labs(title = titlePlot)+
+    labs(title = titlePlot, title.postion = "top")+
   theme(legend.position = "right",
         legend.key.height = unit(3, 'mm'), 
         legend.key.width = unit(1, 'mm'),
@@ -115,16 +115,16 @@ createUSmap <- function(colName,colorPlot, nameScale, titlePlot){
 
   
 
-coal <- createUSmap("coalPercent","black","% energymix", "Coal")
-hydro <- createUSmap("HydroElectricPercent","darkblue","% energymix", "Hydro Electic")
-gas <- createUSmap("gasPercent","brown","% energymix", "Natural Gas")
-petr <- createUSmap("petroleumPercent","wheat4","% energymix", "Petroleum")
-wind <- createUSmap("windPercent","lightblue","% energymix", "Wind")
-nuc <- createUSmap("nuclearPercent","green","% energymix", "Nuclear")
-bio <- createUSmap("biomassPercent","brown","% energymix", "Biomass")
-geo <- createUSmap("geothermalPercent","darkred","% energymix", "Geothermal")
-solar <- createUSmap("solarPercent","yellow","% energymix", "Solar")
-wood <- createUSmap("woodPercent","darkgreen","% energymix", "Wood")
+coal <- createUSmap("coalPercent","black","% of total \nenergymix \nby state", "Coal")
+hydro <- createUSmap("HydroElectricPercent","darkblue","% of total \nenergymix \nby state", "Hydro Electic")
+gas <- createUSmap("gasPercent","brown","% of total \nenergymix \nby state", "Natural Gas")
+petr <- createUSmap("petroleumPercent","wheat4","% of total \nenergymix \nby state", "Petroleum")
+wind <- createUSmap("windPercent","lightblue","% of total \nenergymix \nby state", "Wind")
+nuc <- createUSmap("nuclearPercent","green","% of total \nenergymix \nby state", "Nuclear")
+bio <- createUSmap("biomassPercent","brown","% of total \nenergymix \nby state", "Biomass")
+geo <- createUSmap("geothermalPercent","darkred","% of total \nenergymix \nby state", "Geothermal")
+solar <- createUSmap("solarPercent","yellow","% of total \nenergymix \nby state", "Solar")
+wood <- createUSmap("woodPercent","darkgreen","% of total \nenergymix \nby state", "Wood")
 
 ```
 
@@ -239,13 +239,21 @@ barPlotData <- barPlotData[order(-barPlotData$VarValues),]
 barPlotData %>% ggplot(mapping = aes(fct_reorder(VarName,
                          VarValues, .desc = TRUE), 
              VarValues)) +
-  geom_col(fill = "steelblue")+#color = VarName)+
+  geom_col(aes(fill = fct_reorder(VarName, VarValues, .desc = TRUE)))+
   
-  ylab("Percentage in the US energymix")#+
+  ylab("Percentage in the US energymix")+
+  scale_fill_manual(values=c("gasPercent"="brown","nuclearPercent"="green","coalPercent"="black","windPercent"="lightblue",
+                             "hydroPercent"="darkblue","solarPercent"="yellow","biomassPercent"="darkgreen",
+                             "petroleumPercent"="grey","geothermalPercent"="red"), 
+                       name="Energy Source",
+                       labels=c("Gas","Nuclear", "Coal", "Wind", "Hydro", "Solar", "Biomass","Petroleum", "Geothermal"))+
+  #legend(x= aes(fct_reorder(VarName, VarValues, .desc = TRUE), VarValues),fill = c("brown","green","black","lightblue","darkblue","yellow","darkgreen","grey","red"), legend = c("Gas","Nuclear", "Coal", "Wind", "Hydro", "Solar", "Biomass","Petroleum", "Geothermal"))
 
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
-        axis.ticks.x=element_blank())
+        axis.ticks.x=element_blank(),
+        legend.position="right")
+  
 
 ```
 ```{r}
