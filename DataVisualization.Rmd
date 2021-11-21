@@ -42,7 +42,7 @@ for the year 2020 and to only show the total amount of electricity used in a sta
 mapDemRep <- totalData %>% filter(YEAR=="2020") %>% filter(Type_of_Producer=='Total Electric Power Industry') %>% mutate(dem_rep=if_else(dem_percent>rep_percent,"Democratic","Republican"))
 cols <- c("Republican" = "red", "Democratic" = "blue")
 USplot <-  plot_usmap(data = mapDemRep, values="dem_rep",regions = "states",labels = TRUE) + 
- scale_fill_manual(values = cols, name = "Political Party", 
+ scale_fill_manual(values = cols, name = "Political Party which \nwon the state", 
                   guide = guide_legend(reverse = TRUE))+
     labs(title = "Pesidential elections in the US 2020") +
   theme(legend.position = "bottom")
@@ -68,11 +68,14 @@ grid.arrange(USplot,USplot1, ncol=2, top=textGrob("Politics and renewable energi
 
 
 ```
+```{r}
+```
 When looking at the first graph and with the questions from the begining there are some interesting observations can be made.
-  1. The States with the highest amount of renewables are in the northern part of the united states
-  2. Idaho and South Dakota were won by the republicans but have a high percentage of renewables 
-  3. There is a large range of percentages of renewables between the individual states
-  4. There is no obvious correlation between the percentage of renewables and the party that won a state
+
+1. The States with the highest amount of renewables are in the northern part of the united states
+2. Idaho and South Dakota were won by the republicans but have a high percentage of renewables 
+3. There is a large range of percentages of renewables between the individual states
+4. There is no obvious correlation between the percentage of renewables and the party that won a state
   
 
 ```{r}
@@ -104,11 +107,12 @@ createUSmap <- function(colName,colorPlot, nameScale, titlePlot){
   returnPlot <-  plot_usmap(data =greenCard, values=colName,regions = "states") + 
     scale_fill_continuous(low = "white", high = colorPlot, 
                           name = nameScale, label = scales::comma)+
-    labs(title = titlePlot, title.postion = "top")+
+    labs(title = titlePlot)+
   theme(legend.position = "right",
         legend.key.height = unit(3, 'mm'), 
         legend.key.width = unit(1, 'mm'),
-        legend.title =element_text(size=8))
+        legend.title =element_text(size=8),
+        plot.title = element_text(hjust = 0.5))
   returnPlot$layers[[2]]$aes_params$size <- 2
   return(returnPlot)
 }
@@ -121,44 +125,53 @@ gas <- createUSmap("gasPercent","brown","% of total \nenergymix \nby state", "Na
 petr <- createUSmap("petroleumPercent","wheat4","% of total \nenergymix \nby state", "Petroleum")
 wind <- createUSmap("windPercent","lightblue","% of total \nenergymix \nby state", "Wind")
 nuc <- createUSmap("nuclearPercent","green","% of total \nenergymix \nby state", "Nuclear")
-bio <- createUSmap("biomassPercent","brown","% of total \nenergymix \nby state", "Biomass")
+bio <- createUSmap("biomassPercent","darkgreen","% of total \nenergymix \nby state", "Biomass")
 geo <- createUSmap("geothermalPercent","darkred","% of total \nenergymix \nby state", "Geothermal")
 solar <- createUSmap("solarPercent","yellow","% of total \nenergymix \nby state", "Solar")
-wood <- createUSmap("woodPercent","darkgreen","% of total \nenergymix \nby state", "Wood")
+wood <- createUSmap("woodPercent","saddlebrown","% of total \nenergymix \nby state", "Wood")
 
 ```
 
 After looking through all different sources the 4, in my opinion, most interesting ones were picked and displayed below.
 By combining those 4 into one grafic.
 
-```{r}
-grid.arrange(solar,wood,geo,wind, ncol=2,nrow=2, top=textGrob("Renewable Energies",gp=gpar(fontsize=20,font=3)))
-
-```
 ## Analysis of the individual parts of the energymix in the 52 states
 
 The darker the color the higher the percentage of the energymix of this state.
 Be aware of the color scheme as they differ between the productiontypes. This 
 is on purpose to to better show the variety if the maximum percentage is rather low.
 
+```{r}
+grid.arrange(solar,wood,geo,wind, ncol=2,nrow=2, top=textGrob(expression(bold(underline("Renewable Energies"))),gp=gpar(fontsize=20,font=3)))
 
-Interessting aspects:
-  Solar:
-    * Mainly used in california and nevada
-    * Texas is relativly low eventhough the state has favorable wetherconditions for this type of energy production
+
+```
+```{r}
+```
+
+
+
+__Interessting aspects__ <br />
+Solar
+  
+* Mainly used in california and nevada
+* Texas is relativly low eventhough the state has favorable wetherconditions for this type of energy production
     
-  Wood:
-    * Main and Vermont booth get more than 15 % of their energy from wood
-    * Georga and New Hemsphire get a little over 4 % of their energy supplied by wood
+Wood
+  
+* Main and Vermont booth get more than 15 % of their energy from wood
+* Georga and New Hemsphire get a little over 4 % of their energy supplied by wood
     
-  Geothermal:
-    * Hardly adds to the supply of Energy throught the US 
-    * The hotspot for this technology is Nevada 
-    * Followed by California
+Geothermal
+  
+* Hardly adds to the supply of Energy throught the US 
+* The hotspot for this technology is Nevada 
+* Followed by California
     
-  Wind:
-    * Relative percentage of wind as a source of power is greate in the center of the country 
-    * Wind does not account for much of the energysupply on the coast 
+Wind
+  
+* Relative percentage of wind as a source of power is greate in the center of the country 
+* Wind does not account for much of the energysupply on the coast 
     
     
 
@@ -170,39 +183,60 @@ Interessting aspects:
 greenCard <- greenCard[!(greenCard$state == "US-Total"),]
 greenCard <- greenCard[!(greenCard$state == "DC"),]
 
-greenCard <- greenCard %>% mutate(renewablePercent = log(renewablePercent)) 
+greenCard <- greenCard %>% mutate(renewablePercent = log(renewablePercent)) %>% mutate(PopulationInMio = Population/1000000) %>% mutate(GdpinBUSD = GdpinMioUSD/1000)
 
-CorrelationPlots <- pivot_longer(greenCard,cols = c("SunHours", "AvgWindSpeed", "Population", "EducationIndex", "rep_percent", "GdpinMioUSD"), names_to = "VarName", values_to = "VarValues")
+CorrelationPlots <- pivot_longer(greenCard,cols = c("SunHours", "AvgWindSpeed", "PopulationInMio", "EducationIndex", "rep_percent", "GdpinBUSD"), names_to = "VarName", values_to = "VarValues")
+```
 
+
+```{r}
 p <- ggplot(CorrelationPlots, mapping = aes(VarValues, renewablePercent)) + 
   geom_point(size=0.75)+
   geom_smooth(method='lm')
-p + facet_wrap(~VarName, scales = "free_x", ncol = 3, labeller = labeller(VarName =
+p + facet_wrap(~VarName, scales = "free", ncol = 3, labeller = labeller(VarName =
                                                                             c("SunHours" = "Average sunshine hours per day", 
-                                                                              "AvgWindSpeed" = "Average Wind Speed", 
-                                                                              "Population"= "Population", 
+                                                                              "AvgWindSpeed" = "Average Wind Speed in mph", 
+                                                                              "PopulationInMio"= "Population in mio", 
                                                                               "EducationIndex"="Education index", 
                                                                               "rep_percent" = "Percentage votes Republicans 2020 ",
-                                                                              "GdpinMioUSD" = "Gdp in Mio USD in 2020")
+                                                                              "GdpinBUSD" = "GDP in billion USD in 2020")
                                                                           ))+
   ylab("Log percentage of renewable energy")+
-  xlab("Individual units")+
+  xlab("")+
   labs(title = "Correlation of individual factors on the percentage of renewable energy used" )+
-  theme(panel.spacing = unit(2, "lines"))
+  theme(panel.spacing = unit(1, "lines"),
+        strip.text=element_text(size=8))
 
 ```
 ```{r}
+```
+Form the grafic one can  tell that GDP and Population themself make not much sense to use in the regression. THey appear to have a similar distribution. In addition to this is the consideration that population and GDP are correlated and violate the Markov Theorem for multicolinarity.
+Therefor it makes sense to GDP per Capita in Million which can be achieved by dividing the GDP by the population of a state.
+When combining the two fators they became irrelevant for the regression.
 
-lmodel <- lm(renewablePercent ~ SunHours + AvgWindSpeed + Population + EducationIndex + GdpinMioUSD + rep_percent, data = greenCard)
+```{r}
+greenCard <- greenCard %>% mutate(gdpPerCap = GdpinMioUSD/Population)
+lmodel <- lm(renewablePercent ~ SunHours + AvgWindSpeed + gdpPerCap + EducationIndex +  rep_percent, data = greenCard)
 summary(lmodel)
 
 ```
+After the adjustments only the average windspeed and the average sun hours appear to be factors for the amount of renewables that are being used in a state.
+Notes to the regression:
+  * only explains 19.24 % of the variations in the data
+  * other relevant factors have been left out (e.g. factor that would help describe the percentage of hydro)
+  * the regression still explains part of the issue as the p-value for the test that all ß=0 is smaller than .05
+  
+
+
 ```{r}
 greenCard <- data.frame(greenCard, y_hat = fitted(lmodel), e = residuals(lmodel))
-print(greenCard)
 ```
-## Fehleranalyse 
+## Error analyse 
 
+When looking at the plot bellow which shows the fitted y vs the actual y, one can tell that the regression is not \n
+really good. It is obvious that the predicted value is overestimated in the first half and underestimated in the \n
+second half. This translates to low actual y's being overestimated and high actual y's being underestimated. \n
+The redline represents where the prediction would perfectly match the actual y value.
 
 
 ```{r}
@@ -228,7 +262,7 @@ barPlotData <- totalData %>%
   mutate(biomassPercent= (biomass/Total)*100) %>%
   mutate(geothermalPercent= (Geothermal/Total)*100) %>%
   mutate(solarPercent= (Solar/Total)*100) %>% filter(YEAR == 2020) %>% filter(state == "US-Total") %>% filter(Type_of_Producer =="Total Electric Power Industry")
-barPlotData <- pivot_longer(barPlotData,cols = c("coalPercent", "HydroElectricPercent", "gasPercent", "petroleumPercent", "windPercent", "nuclearPercent","biomassPercent","geothermalPercent","solarPercent"), names_to = "VarName", values_to = "VarValues")
+barPlotData <- pivot_longer(barPlotData,cols = c("coalPercent", "HydroElectricPercent", "gasPercent", "petroleumPercent", "windPercent","woodPercent", "nuclearPercent","biomassPercent","geothermalPercent","solarPercent"), names_to = "VarName", values_to = "VarValues")
 barPlotData <- barPlotData[order(-barPlotData$VarValues),]
 
 ```
@@ -242,17 +276,19 @@ barPlotData %>% ggplot(mapping = aes(fct_reorder(VarName,
   geom_col(aes(fill = fct_reorder(VarName, VarValues, .desc = TRUE)))+
   
   ylab("Percentage in the US energymix")+
-  scale_fill_manual(values=c("gasPercent"="brown","nuclearPercent"="green","coalPercent"="black","windPercent"="lightblue",
-                             "hydroPercent"="darkblue","solarPercent"="yellow","biomassPercent"="darkgreen",
-                             "petroleumPercent"="grey","geothermalPercent"="red"), 
+  scale_fill_manual(values=c("gasPercent"="burlywood4","nuclearPercent"="green","coalPercent"="black",
+                             "windPercent"="lightblue","HydroElectricPercent"="darkblue","solarPercent"="yellow",
+                             "biomassPercent"="darkgreen","petroleumPercent"="grey","geothermalPercent"="darkred",
+                             "woodPercent"="saddlebrown"), 
                        name="Energy Source",
-                       labels=c("Gas","Nuclear", "Coal", "Wind", "Hydro", "Solar", "Biomass","Petroleum", "Geothermal"))+
-  #legend(x= aes(fct_reorder(VarName, VarValues, .desc = TRUE), VarValues),fill = c("brown","green","black","lightblue","darkblue","yellow","darkgreen","grey","red"), legend = c("Gas","Nuclear", "Coal", "Wind", "Hydro", "Solar", "Biomass","Petroleum", "Geothermal"))
-
+                       labels=c("Gas","Nuclear", "Coal", "Wind", "Hydro", "Solar", "Biomass","Petroleum", "Geothermal",
+                                "Wood"))+
+  labs(title = "Energymix in the United States")+
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank(),
-        legend.position="right")
+        legend.position="right",
+        plot.title = element_text(hjust = 0.5))
   
 
 ```
