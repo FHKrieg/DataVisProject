@@ -8,6 +8,9 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+#change electricity used to electricity produced 
+
+
 
 ## Republicans don't believe in climate change so those states will use less renewable Energies
 
@@ -33,11 +36,29 @@ library(grid)
 ```{r}
 totalData <- read_csv("totalData.csv")
 ```
+## Description of the dataset 
+
+The column year refers to the data on electricity it does not refer to any of the data after the column solar.
+The col Type_of_producer refers to the type of producer of electricity, here the focus will only be on Total Electric Power Industry. This is due to the fact that this research is focused only on the entire electricity production of the coutry and states.
+The columns from Total to Solar are the MW/h produced by the source which labels the column.
+The col Geoname has the full name of the state.
+The col GDPinMioUSD contains the GDP by state in million USD from the year 2020.
+The col sunHours contains the average sun hours per day.
+The col AvgWindSpeed contains the average Wind speed throughout the year in mph.
+The col EductaioIndex is a Index which is used to represent the level of education in a state.
+The col Population contains the population of the individual states.
+The col dem_percent and rep_percent hold the percentage of the votes the Democratic/Republican party won
+in the 2020 presidential elections by state.
+
+
+## First visual inspection
+
 The first plot is supposed to give an overview over the political outcome and the energy mix of a state side by side.
-In order to achiev this the political results are used to display who of the two parties has gained more votes in a state
-and the state will then be marked according to the winning political parties color. in the graph on the right the percentage
+In order to achiev this the political results are used to display which of the two parties has gained more votes in a state
+and the state will then be marked according to the winning political parties color. In the graph on the right the percentage
 of renewable energy in the energy mix of a state will be represented. In order to achieve this the data on the was filtered
-for the year 2020 and to only show the total amount of electricity used in a state cummulated over all segments. After this the cummulated sum over the renewable energies was build and divided by the total amount of energy consumed in a state.
+for the year 2020 and to only show the total amount of electricity used in a state cummulated over all segments. After this the cummulated sum over the renewable energies was build and divided by the total amount of energy produced in a state. <br />
+__Graph 1__
 ```{r}
 mapDemRep <- totalData %>% filter(YEAR=="2020") %>% filter(Type_of_Producer=='Total Electric Power Industry') %>% mutate(dem_rep=if_else(dem_percent>rep_percent,"Democratic","Republican"))
 cols <- c("Republican" = "red", "Democratic" = "blue")
@@ -48,10 +69,9 @@ USplot <-  plot_usmap(data = mapDemRep, values="dem_rep",regions = "states",labe
   theme(legend.position = "bottom")
   
 USplot$layers[[2]]$aes_params$size <- 2
-
-
-
 ```
+
+__Graph 2__
 ```{r}
 greenCard <- totalData %>% filter(YEAR=="2020") %>% filter(Type_of_Producer=='Total Electric Power Industry')  %>% mutate(renewableTotal=HydroElectric+Wind+wood+biomass+Geothermal+Solar) %>% mutate(renewablePercent= (renewableTotal/Total)*100)
 
@@ -62,7 +82,10 @@ USplot1 <-  plot_usmap(data =greenCard, values="renewablePercent",regions = "sta
   theme(legend.position = "bottom")
   
 USplot1$layers[[2]]$aes_params$size <- 2
+```
 
+__Merger of Graph 1 and Graph 2__
+```{r}
 
 grid.arrange(USplot,USplot1, ncol=2, top=textGrob("Politics and renewable energies in the United States",gp=gpar(fontsize=20,font=3)))
 
@@ -142,7 +165,7 @@ Be aware of the color scheme as they differ between the productiontypes. This
 is on purpose to to better show the variety if the maximum percentage is rather low.
 
 ```{r}
-grid.arrange(solar,wood,geo,wind, ncol=2,nrow=2, top=textGrob(expression(bold(underline("Renewable Energies"))),gp=gpar(fontsize=20,font=3)))
+grid.arrange(solar,wood,geo,wind, ncol=2,nrow=2, top=textGrob(expression(bold(underline("Renewable Energy Sources"))),gp=gpar(fontsize=20,font=3)))
 
 
 ```
@@ -151,24 +174,24 @@ grid.arrange(solar,wood,geo,wind, ncol=2,nrow=2, top=textGrob(expression(bold(un
 
 
 
-__Interessting aspects__ <br />
-Solar
+## Interessting aspects
+__Solar__
   
 * Mainly used in california and nevada
 * Texas is relativly low eventhough the state has favorable wetherconditions for this type of energy production
     
-Wood
+__Wood__
   
 * Main and Vermont booth get more than 15 % of their energy from wood
 * Georga and New Hemsphire get a little over 4 % of their energy supplied by wood
     
-Geothermal
+__Geothermal__
   
 * Hardly adds to the supply of Energy throught the US 
 * The hotspot for this technology is Nevada 
 * Followed by California
     
-Wind
+__Wind__
   
 * Relative percentage of wind as a source of power is greate in the center of the country 
 * Wind does not account for much of the energysupply on the coast 
@@ -177,9 +200,6 @@ Wind
 
 
 ```{r}
-
-
-#Check for the logarithmic functions used in the Regression
 greenCard <- greenCard[!(greenCard$state == "US-Total"),]
 greenCard <- greenCard[!(greenCard$state == "DC"),]
 
@@ -187,7 +207,9 @@ greenCard <- greenCard %>% mutate(renewablePercent = log(renewablePercent)) %>% 
 
 CorrelationPlots <- pivot_longer(greenCard,cols = c("SunHours", "AvgWindSpeed", "PopulationInMio", "EducationIndex", "rep_percent", "GdpinBUSD"), names_to = "VarName", values_to = "VarValues")
 ```
-
+US-Total and DC will be dropped as they are not states and the analysis is supposed to be based on the state level.
+Populaiton and GDP are adjusted to make the numbers more readable.
+Data is pivoted to be able to run the facet_wrap for the following graph.
 
 ```{r}
 p <- ggplot(CorrelationPlots, mapping = aes(VarValues, renewablePercent)) + 
@@ -204,15 +226,16 @@ p + facet_wrap(~VarName, scales = "free", ncol = 3, labeller = labeller(VarName 
   ylab("Log percentage of renewable energy")+
   xlab("")+
   labs(title = "Correlation of individual factors on the percentage of renewable energy used" )+
-  theme(panel.spacing = unit(1, "lines"),
+  theme(axis.title.x=element_blank(),
+        panel.spacing = unit(1, "lines"),
         strip.text=element_text(size=8))
 
 ```
 ```{r}
 ```
-Form the grafic one can  tell that GDP and Population themself make not much sense to use in the regression. THey appear to have a similar distribution. In addition to this is the consideration that population and GDP are correlated and violate the Markov Theorem for multicolinarity.
-Therefor it makes sense to GDP per Capita in Million which can be achieved by dividing the GDP by the population of a state.
-When combining the two fators they became irrelevant for the regression.
+Form the grafic one can  tell that GDP and Population themself make not much sense to use in the regression. They appear to have a similar distribution. In addition to this is the consideration that population and GDP are correlated and violate the Markov Theorem for multicolinarity.
+Therefor it makes sense to convert them to GDP per Capita in Million which can be achieved by dividing the GDP by the population of a state.
+Interestingly, when combining the two fators they become irrelevant for the regression.
 
 ```{r}
 greenCard <- greenCard %>% mutate(gdpPerCap = GdpinMioUSD/Population)
@@ -220,22 +243,26 @@ lmodel <- lm(renewablePercent ~ SunHours + AvgWindSpeed + gdpPerCap + EducationI
 summary(lmodel)
 
 ```
-After the adjustments only the average windspeed and the average sun hours appear to be factors for the amount of renewables that are being used in a state.
-Notes to the regression:
+After the adjustments only the average windspeed and the average sun hours appear to be factors for the amount of renewables that are being used in a state. So only the natural factors, that decide over the productiveness of the 
+renewable energies, appear to play a role. The percentage of the republicans as well as the other factors are not significant for the percentage of renewable energies produced in one state.
+
+__Notes to the regression__
+
   * only explains 19.24 % of the variations in the data
   * other relevant factors have been left out (e.g. factor that would help describe the percentage of hydro)
   * the regression still explains part of the issue as the p-value for the test that all ß=0 is smaller than .05
   
 
-
+## Predict all the y's based on the linear regression
 ```{r}
 greenCard <- data.frame(greenCard, y_hat = fitted(lmodel), e = residuals(lmodel))
 ```
-## Error analyse 
 
-When looking at the plot bellow which shows the fitted y vs the actual y, one can tell that the regression is not \n
-really good. It is obvious that the predicted value is overestimated in the first half and underestimated in the \n
-second half. This translates to low actual y's being overestimated and high actual y's being underestimated. \n
+## Error analysis
+
+When looking at the plot bellow which shows the fitted y vs the actual y, one can tell that the regression is not
+really good. It is obvious that the predicted value is overestimated in the first half and underestimated in the
+second half. This translates to low actual y's being overestimated and high actual y's being underestimated.
 The redline represents where the prediction would perfectly match the actual y value.
 
 
@@ -249,6 +276,8 @@ greenCard %>% ggplot(mapping = aes(renewablePercent, y_hat))+
   theme_bw()
 
 ```
+
+__Filter the data to provide an overview of the energy sources in the whole of United States__
 
 ```{r}
 barPlotData <- totalData %>% 
@@ -267,7 +296,7 @@ barPlotData <- barPlotData[order(-barPlotData$VarValues),]
 
 ```
 
-
+__Graphic energymix USA__
 
 ```{r}
 barPlotData %>% ggplot(mapping = aes(fct_reorder(VarName,
@@ -293,10 +322,8 @@ barPlotData %>% ggplot(mapping = aes(fct_reorder(VarName,
 
 ```
 ```{r}
-
-
 ```
-
+When looking at the overall data some interesting observations can be made
 
 
 
