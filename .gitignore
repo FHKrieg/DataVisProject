@@ -12,13 +12,13 @@
 *-Ex.R
 
 # Ignore Datafiles
-/*.csv
-/*.osm
-/*.xls
-/*.xlsx
-/*.dta copy
-/*.tsv
-/*.DS_Store
+/data/*.csv
+/data/*.osm
+/data/*.xls
+/data/*.xlsx
+/data/*.dta copy
+/data/*.tsv
+/data/*.DS_Store
 
 
 # Output files from R CMD build
