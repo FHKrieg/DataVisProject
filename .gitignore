@@ -12,12 +12,12 @@
 *-Ex.R
 
 # Ignore Datafiles
-*/data/*.csv
-*/data/*.osm
-*/data/*.xls
-*/data/*.xlsx
-*/data/*.dta copy
-*/data/*.tsv
+*/*.csv
+*/*.osm
+*/*.xls
+*/*.xlsx
+*/*.dta copy
+*/*.tsv
 /*.DS_Store
 
 
