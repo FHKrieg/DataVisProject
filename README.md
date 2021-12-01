@@ -3,7 +3,6 @@ Visual analysis of the US Renewable Energies with certain Parameters
 
 
 The Data for the project can be found on the following webpages:
-
 Please note that this is not a scientific research and the goal is to practice building Graphics.
 
 <https://www.eia.gov/electricity/data/state/>
